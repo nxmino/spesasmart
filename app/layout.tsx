@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import BottomNav from "@/components/BottomNav";
 import PWABanner from "@/components/PWABanner";
 
-const inter = Inter({ subsets: ["latin"] });
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "SpesaSmart — Confronta prezzi, risparmia davvero",
@@ -20,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#16a34a",
+  themeColor: "#0B3D2C",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -37,10 +41,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
       </head>
-      <body className={`${inter.className} bg-slate-50`}>
+      <body className={figtree.className}>
         <Header />
-        <div className="min-h-[calc(100vh-64px-61px)]">{children}</div>
-        <Footer />
+        <main className="pb-nav lg:pb-6">{children}</main>
+        <BottomNav />
         <PWABanner />
       </body>
     </html>

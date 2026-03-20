@@ -20,74 +20,51 @@ export default function SearchForm({
   onReset,
   onSave,
 }: SearchFormProps) {
-  const [input, setInput] = useState("");
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
   const [savedFeedback, setSavedFeedback] = useState(false);
-
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const hasResults = productResults.some((r) => r.offers.length > 0);
-  const isAnyLoading = productResults.some((r) => r.loading);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchSuggestions = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setSuggestions([]);
-      setShowDropdown(false);
-      return;
-    }
+    if (q.length < 2) { setSuggestions([]); return; }
     try {
       const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setSuggestions(data);
-      setShowDropdown(data.length > 0);
-      setHighlightedIndex(-1);
-    } catch {
-      setSuggestions([]);
-    }
-  }, []);
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(Array.isArray(data) ? data.filter((s: string) => !products.includes(s)) : []);
+      }
+    } catch { setSuggestions([]); }
+  }, [products]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInput(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(value), 400);
-  };
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) { setSuggestions([]); return; }
+    debounceRef.current = setTimeout(() => fetchSuggestions(query.trim()), 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [query, fetchSuggestions]);
 
-  const addProduct = (product: string) => {
-    const trimmed = product.trim();
-    if (!trimmed || products.includes(trimmed)) return;
-    onSearch(trimmed);
-    setInput("");
+  const submit = (value?: string) => {
+    const v = (value ?? query).trim().toLowerCase();
+    if (!v || products.includes(v)) return;
+    onSearch(v);
+    setQuery("");
     setSuggestions([]);
-    setShowDropdown(false);
-    setHighlightedIndex(-1);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    setShowSuggestions(false);
+    setActiveIdx(-1);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Escape") {
-      setShowDropdown(false);
-      setHighlightedIndex(-1);
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setShowSuggestions(false); return; }
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === "Enter") { e.preventDefault(); submit(); }
       return;
     }
-    if (!showDropdown) {
-      if (e.key === "Enter") addProduct(input);
-      return;
-    }
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlightedIndex((i) => Math.max(i - 1, -1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      highlightedIndex >= 0 ? addProduct(suggestions[highlightedIndex]) : addProduct(input);
-    }
+    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx((i) => (i + 1) % suggestions.length); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx((i) => (i <= 0 ? suggestions.length - 1 : i - 1)); }
+    else if (e.key === "Enter") { e.preventDefault(); activeIdx >= 0 ? submit(suggestions[activeIdx]) : submit(); }
   };
 
   const handleSave = () => {
@@ -96,203 +73,128 @@ export default function SearchForm({
     setTimeout(() => setSavedFeedback(false), 2000);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        !inputRef.current?.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="card p-5 sm:p-6 flex flex-col gap-4">
-      {/* Header card */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-800">
-          Prodotti da cercare
-        </h2>
+    <div className="card p-4 animate-fade-up">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-bold text-ink">Lista della spesa</h2>
         {products.length > 0 && (
-          <span className="text-xs font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+          <span className="text-2xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">
             {products.length} {products.length === 1 ? "prodotto" : "prodotti"}
           </span>
         )}
       </div>
 
-      {/* Input + pulsante */}
+      {/* Input row */}
       <div className="relative">
-        <div className="flex gap-2">
+        <div className="relative flex items-center gap-2">
           <div className="relative flex-1">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-tertiary pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
             <input
               ref={inputRef}
               type="text"
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
-              placeholder="Aggiungi prodotto..."
-              autoComplete="off"
-              className="input-base pl-9 pr-3"
+              placeholder="Cerca un prodotto…"
+              className="input-field pl-10 pr-4"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); setActiveIdx(-1); }}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
+              onKeyDown={handleKey}
             />
           </div>
-          <button
-            onClick={() => addProduct(input)}
-            disabled={!input.trim()}
-            className="btn-primary px-4 shrink-0 flex items-center gap-1.5"
-            aria-label="Aggiungi prodotto"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          <button onClick={() => submit()} disabled={!query.trim()} className="btn-primary shrink-0 px-4 py-3">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span className="hidden sm:inline">Aggiungi</span>
           </button>
         </div>
 
-        {/* Autocomplete dropdown */}
-        {showDropdown && suggestions.length > 0 && (
-          <div
-            ref={dropdownRef}
-            className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-50 overflow-hidden"
-          >
+        {/* Autocomplete */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute z-30 mt-2 inset-x-0 bg-white rounded-2xl shadow-elevated border border-ink-faint/30 overflow-hidden animate-scale-in">
             {suggestions.map((s, i) => (
               <button
                 key={s}
-                onMouseDown={(e) => { e.preventDefault(); addProduct(s); }}
-                className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${
-                  i === highlightedIndex
-                    ? "bg-green-50 text-green-800"
-                    : "text-slate-700 hover:bg-slate-50"
-                } ${i > 0 ? "border-t border-slate-100" : ""}`}
+                className={`w-full text-left px-4 py-3 text-sm transition-colors ${
+                  i === activeIdx ? "bg-brand-50 text-brand-700" : "text-ink hover:bg-surface"
+                }`}
+                onMouseDown={() => submit(s)}
+                onMouseEnter={() => setActiveIdx(i)}
               >
-                <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className="truncate">{s}</span>
+                {s}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Chips prodotti */}
+      {/* Chips */}
       {products.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap gap-2 mt-3">
           {products.map((p) => {
             const result = productResults.find((r) => r.product === p);
-            const loading = result?.loading ?? false;
-            const hasError = !!result?.error;
-            const done = !loading && !hasError && (result?.offers.length ?? 0) > 0;
+            const isLoading = result?.loading;
+            const hasError = result?.error;
+            const isDone = result && !result.loading && !result.error;
 
             return (
-              <span
+              <div
                 key={p}
-                className={`group inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-sm font-medium
-                  transition-all duration-200 animate-fade-in ${
-                  hasError
-                    ? "bg-red-50 text-red-700 border border-red-200"
-                    : loading
-                    ? "bg-amber-50 text-amber-700 border border-amber-200"
-                    : done
-                    ? "bg-green-50 text-green-800 border border-green-200"
-                    : "bg-slate-100 text-slate-600 border border-slate-200"
-                }`}
+                className={
+                  isLoading ? "chip-loading" : hasError ? "chip-error" : isDone ? "chip-success" : "chip-default"
+                }
               >
-                {loading ? (
-                  <svg className="w-3 h-3 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                {isLoading && (
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                   </svg>
-                ) : done ? (
-                  <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd" />
+                )}
+                {isDone && (
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                ) : hasError ? (
-                  <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd" />
+                )}
+                {hasError && (
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                ) : null}
-                <span className="max-w-[140px] truncate">{p}</span>
-                <button
-                  onClick={() => onRemove(p)}
-                  className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
-                  aria-label={`Rimuovi ${p}`}
-                >
+                )}
+                <span>{p}</span>
+                <button onClick={() => onRemove(p)} className="ml-0.5 -mr-1 w-4 h-4 flex items-center justify-center rounded-full hover:bg-black/10 transition-colors">
                   <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
-              </span>
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* Divider */}
-      {products.length > 0 && <div className="border-t border-slate-100" />}
-
-      {/* Azioni */}
-      <div className="flex gap-2.5">
-        <button
-          onClick={handleSave}
-          disabled={!hasResults || isAnyLoading}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium
-            transition-all duration-200 active:scale-95
-            ${savedFeedback
-              ? "bg-green-700 text-white"
-              : "btn-primary"
-            }
-            disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100`}
-        >
-          {savedFeedback ? (
-            <>
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd" />
-              </svg>
-              Salvato!
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-              Salva ricerca
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={onReset}
-          disabled={products.length === 0}
-          className="btn-secondary flex-1 flex items-center justify-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Nuova
-        </button>
-      </div>
+      {/* Actions */}
+      {products.length > 0 && (
+        <div className="flex gap-2 mt-4">
+          <button onClick={handleSave} className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm">
+            {savedFeedback ? (
+              <>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                Salvato
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
+                Salva ricerca
+              </>
+            )}
+          </button>
+          <button onClick={onReset} className="btn-secondary px-4 flex items-center justify-center">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

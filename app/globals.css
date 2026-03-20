@@ -6,92 +6,80 @@
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    --bottom-nav-h: 68px;
   }
 
   body {
-    @apply antialiased text-slate-900;
+    @apply antialiased text-ink bg-surface;
   }
 
-  /* Scrollbar sottile su desktop */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400;
-  }
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-ink-faint rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-ink-tertiary; }
 }
 
 @layer components {
-  /* Card base condivisa */
   .card {
-    @apply bg-white rounded-2xl border border-slate-100 shadow-[0_2px_20px_rgba(0,0,0,0.06)];
+    @apply bg-surface-card rounded-3xl shadow-card;
+  }
+  .card-interactive {
+    @apply card transition-shadow duration-200 hover:shadow-card-hover active:scale-[0.99];
   }
 
-  /* Bottone primario */
   .btn-primary {
-    @apply bg-green-600 text-white font-medium rounded-xl px-4 py-2.5 text-sm
-           hover:bg-green-700 active:scale-95
+    @apply bg-brand-600 text-white font-semibold rounded-2xl px-5 py-3 text-sm
+           hover:bg-brand-700 active:scale-[0.97]
            disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
            transition-all duration-150;
   }
-
-  /* Bottone secondario */
   .btn-secondary {
-    @apply bg-slate-100 text-slate-700 font-medium rounded-xl px-4 py-2.5 text-sm
-           hover:bg-slate-200 active:scale-95
+    @apply bg-surface text-ink font-semibold rounded-2xl px-5 py-3 text-sm border border-ink-faint
+           hover:bg-white active:scale-[0.97]
            disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
            transition-all duration-150;
   }
 
-  /* Input base */
-  .input-base {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-800
-           placeholder-slate-400 bg-white text-sm
-           focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500
-           transition-colors duration-150;
+  .input-field {
+    @apply w-full px-4 py-3 rounded-2xl border border-ink-faint/60 text-ink bg-white text-sm
+           placeholder:text-ink-tertiary
+           focus:outline-none focus:ring-2 focus:ring-brand-400/30 focus:border-brand-500
+           transition-all duration-150;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full
+           transition-all duration-150;
+  }
+  .chip-default {
+    @apply chip bg-surface text-ink-secondary border border-ink-faint/50;
+  }
+  .chip-success {
+    @apply chip bg-brand-50 text-brand-700 border border-brand-200;
+  }
+  .chip-loading {
+    @apply chip bg-amber-50 text-amber-700 border border-amber-200;
+  }
+  .chip-error {
+    @apply chip bg-red-50 text-red-600 border border-red-200;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl;
   }
 }
 
-/* Animazioni */
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeSlideIn 0.25s ease-out forwards;
-}
-
-.animate-fade-up {
-  animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-fade-up-delay-1 { animation: fadeSlideUp 0.4s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-fade-up-delay-2 { animation: fadeSlideUp 0.4s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-fade-up-delay-3 { animation: fadeSlideUp 0.4s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Safe area per PWA su iPhone */
+/* Safe area for PWA on iPhone + bottom nav */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pb-nav {
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 8px);
+}
+
+/* Price tag styling */
+.price-tag {
+  @apply font-bold tabular-nums tracking-tight;
 }

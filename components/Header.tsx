@@ -7,51 +7,47 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_1px_16px_rgba(0,0,0,0.05)]">
-      {/* Brand accent line */}
-      <div className="h-[3px] bg-gradient-to-r from-green-400 via-green-600 to-emerald-500" />
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 glass border-b border-ink-faint/30">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-green-600 flex items-center justify-center text-sm shadow-sm group-hover:bg-green-700 group-hover:shadow-md transition-all duration-200">
-            🛒
+          <div className="w-8 h-8 rounded-xl bg-brand-900 flex items-center justify-center shadow-sm group-active:scale-95 transition-transform">
+            <svg className="w-4 h-4 text-brand-300" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
           </div>
-          <span className="font-extrabold text-slate-900 text-lg tracking-tight leading-none">
-            Spesa<span className="text-green-600">Smart</span>
+          <span className="font-extrabold text-ink text-lg tracking-tight">
+            Spesa<span className="text-brand-600">Smart</span>
           </span>
         </Link>
 
-        {/* Nav */}
-        <nav className="flex items-center gap-0.5">
+        {/* Desktop nav */}
+        <nav className="hidden lg:flex items-center gap-1">
           <Link
             href="/"
-            className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
+            className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all ${
               pathname === "/"
-                ? "text-green-700 bg-green-50"
-                : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                ? "text-brand-700 bg-brand-50"
+                : "text-ink-secondary hover:text-ink hover:bg-surface"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
-            <span className="hidden sm:inline">Home</span>
+            Cerca
           </Link>
-
           <Link
             href="/history"
-            className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
+            className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all ${
               pathname === "/history"
-                ? "text-green-700 bg-green-50"
-                : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                ? "text-brand-700 bg-brand-50"
+                : "text-ink-secondary hover:text-ink hover:bg-surface"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="hidden sm:inline">Storico</span>
+            Storico
           </Link>
         </nav>
       </div>

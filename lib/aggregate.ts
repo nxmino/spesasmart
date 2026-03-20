@@ -58,11 +58,15 @@ export function aggregateResults(productResults: ProductResult[]): ShopRow[] {
           title: offer.title,
           price: offer.price,
           affiliateUrl: offer.affiliateUrl,
+          shipping: offer.shipping,
+          shippingCost: offer.shippingCost,
         });
       } else {
         items.push({ product: pr.product, found: false });
       }
     }
+
+    const firstWithShipping = items.find((i) => i.shippingCost !== undefined);
 
     rows.push({
       shop: displayName,
@@ -70,6 +74,8 @@ export function aggregateResults(productResults: ProductResult[]): ShopRow[] {
       foundCount,
       totalProducts: completed.length,
       subtotal,
+      shippingCost: firstWithShipping?.shippingCost,
+      shipping: firstWithShipping?.shipping,
       items,
     });
   }
