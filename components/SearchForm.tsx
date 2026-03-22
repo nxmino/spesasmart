@@ -10,6 +10,8 @@ interface SearchFormProps {
   onRemove: (product: string) => void;
   onReset: () => void;
   onSave: () => void;
+  onShare: () => void;
+  shareFeedback: boolean;
 }
 
 export default function SearchForm({
@@ -19,6 +21,8 @@ export default function SearchForm({
   onRemove,
   onReset,
   onSave,
+  onShare,
+  shareFeedback,
 }: SearchFormProps) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -190,7 +194,18 @@ export default function SearchForm({
               </>
             )}
           </button>
-          <button onClick={onReset} className="btn-secondary px-4 flex items-center justify-center">
+          <button
+            onClick={onShare}
+            title="Copia link da condividere"
+            className="btn-secondary px-3 flex items-center justify-center gap-1.5 text-sm"
+          >
+            {shareFeedback ? (
+              <svg className="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
+            )}
+          </button>
+          <button onClick={onReset} className="btn-secondary px-3 flex items-center justify-center">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
           </button>
         </div>

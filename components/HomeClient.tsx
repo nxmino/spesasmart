@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import SearchForm from "@/components/SearchForm";
 import ResultsTable from "@/components/ResultsTable";
 import CartPanel from "@/components/CartPanel";
@@ -23,37 +24,64 @@ export default function HomeClient() {
   const [productResults, setProductResults] = useState<ProductResult[]>([]);
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [shareFeedback, setShareFeedback] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
   const { saveSession } = useSessions();
+  const searchParams = useSearchParams();
 
+  const loadProducts = useCallback((list: string[]) => {
+    setProducts(list);
+    setProductResults(list.map((p) => ({ product: p, offers: [], loading: true })));
+    list.forEach(async (product) => {
+      try {
+        const data = await fetchProduct(product);
+        setProductResults((prev) =>
+          prev.map((r) =>
+            r.product === product ? { ...r, offers: data.offers ?? [], loading: false } : r
+          )
+        );
+      } catch {
+        setProductResults((prev) =>
+          prev.map((r) =>
+            r.product === product ? { ...r, loading: false, error: "Errore di rete" } : r
+          )
+        );
+      }
+    });
+  }, []);
+
+  // Auto-save when all products finish loading
   useEffect(() => {
+    if (products.length === 0 || autoSaved) return;
+    const allDone = productResults.length === products.length &&
+      productResults.every((r) => !r.loading);
+    if (!allDone) return;
+    saveSession(products, aggregateResults(productResults));
+    setAutoSaved(true);
+  }, [productResults, products, autoSaved, saveSession]);
+
+  // Reset autoSaved flag when the product list changes
+  useEffect(() => {
+    setAutoSaved(false);
+  }, [products.length]);
+
+  // Load from shareable URL param (?p=prod1,prod2)
+  useEffect(() => {
+    const pParam = searchParams.get("p");
+    if (pParam) {
+      const list = pParam.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+      if (list.length > 0) { loadProducts(list); return; }
+    }
+    // Fallback: reload from localStorage
     try {
       const raw = localStorage.getItem("spesasmart_reload");
       if (!raw) return;
       localStorage.removeItem("spesasmart_reload");
       const { products: saved } = JSON.parse(raw) as { products: string[] };
       if (!Array.isArray(saved) || saved.length === 0) return;
-
-      setProducts(saved);
-      setProductResults(saved.map((p) => ({ product: p, offers: [], loading: true })));
-
-      saved.forEach(async (product) => {
-        try {
-          const data = await fetchProduct(product);
-          setProductResults((prev) =>
-            prev.map((r) =>
-              r.product === product ? { ...r, offers: data.offers ?? [], loading: false } : r
-            )
-          );
-        } catch {
-          setProductResults((prev) =>
-            prev.map((r) =>
-              r.product === product ? { ...r, loading: false, error: "Errore di rete" } : r
-            )
-          );
-        }
-      });
+      loadProducts(saved);
     } catch {}
-  }, []);
+  }, [searchParams, loadProducts]);
 
   const handleSearch = async (product: string) => {
     setProducts((prev) => [...prev, product]);
@@ -92,6 +120,16 @@ export default function HomeClient() {
 
   const handleSave = () => {
     saveSession(products, aggregateResults(productResults));
+  };
+
+  const handleShare = () => {
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("p", products.join(","));
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      setShareFeedback(true);
+      setTimeout(() => setShareFeedback(false), 2000);
+    });
   };
 
   const handleCartAdd = (item: CartItem) => {
@@ -145,6 +183,8 @@ export default function HomeClient() {
               onRemove={handleRemove}
               onReset={handleReset}
               onSave={handleSave}
+              onShare={handleShare}
+              shareFeedback={shareFeedback}
             />
             <CartPanel cart={cart} onRemove={handleCartRemove} onClear={handleCartClear} />
           </div>

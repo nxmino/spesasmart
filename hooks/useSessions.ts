@@ -9,22 +9,25 @@ export function useSessions() {
     []
   );
 
+  const FREE_SESSION_CAP = 10;
+
   const saveSession = (
     products: string[],
-    results: AggregatedResults
+    results: AggregatedResults,
+    label?: string
   ): void => {
     const now = new Date();
-    const label = `Ricerca del ${now.toLocaleDateString("it-IT")} ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
+    const sessionLabel = label ?? `Ricerca del ${now.toLocaleDateString("it-IT")} ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
 
     const newSession: Session = {
       id: crypto.randomUUID(),
-      label,
+      label: sessionLabel,
       createdAt: now.toISOString(),
       products,
       results,
     };
 
-    setSessions((prev) => [newSession, ...prev]);
+    setSessions((prev) => [newSession, ...prev].slice(0, FREE_SESSION_CAP));
   };
 
   const deleteSession = (id: string): void => {
