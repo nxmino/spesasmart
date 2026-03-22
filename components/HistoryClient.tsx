@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSessions } from "@/hooks/useSessions";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { Session } from "@/types";
 
 function fmt(n: number) {
@@ -148,11 +147,8 @@ function EmptyState() {
 export default function HistoryClient() {
   const router = useRouter();
   const { sessions, deleteSession } = useSessions();
-  const [, setReload] = useLocalStorage<{ products: string[] } | null>("spesasmart_reload", null);
-
   const handleReload = (session: Session) => {
-    setReload({ products: session.products });
-    router.push("/");
+    router.push(`/?p=${session.products.join(",")}`);
   };
 
   return (
