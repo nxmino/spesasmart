@@ -123,7 +123,7 @@ function ShopAccordionRow({
 
       {/* Accordion */}
       {open && (
-        <div className="px-4 pb-4 flex flex-col animate-fade-in max-h-80 overflow-y-auto overscroll-contain">
+        <div className="px-4 pb-4 flex flex-col animate-fade-in">
           {row.items.map((item) => {
             const inCart = cart?.some((c) => c.product === item.product && c.shopKey === row.shopKey) ?? false;
 
@@ -224,9 +224,9 @@ export default function ResultsTable({ productResults, cart, onCartAdd, onCartRe
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden flex flex-col lg:h-[calc(100svh-92px)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-ink-faint/30 flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-ink-faint/30 flex items-center gap-2 shrink-0">
         <h2 className="font-bold text-ink text-sm flex-1">
           Confronto negozi
           {isAnyLoading && completedCount > 0 && (
@@ -239,39 +239,42 @@ export default function ResultsTable({ productResults, cart, onCartAdd, onCartRe
         </div>
       </div>
 
-      {/* Skeleton */}
-      {isAnyLoading && rows.length === 0 && (
-        <div className="divide-y divide-ink-faint/20">
-          <SkeletonRow />
-          <SkeletonRow />
-          <SkeletonRow />
-        </div>
-      )}
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+        {/* Skeleton */}
+        {isAnyLoading && rows.length === 0 && (
+          <div className="divide-y divide-ink-faint/20">
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </div>
+        )}
 
-      {/* Results */}
-      {rows.length > 0 && (
-        <div className="divide-y divide-ink-faint/20">
-          {rows.map((row, i) => (
-            <ShopAccordionRow
-              key={row.shopKey}
-              row={row}
-              rank={i}
-              totalProducts={completedCount}
-              cart={cart}
-              onCartAdd={onCartAdd}
-              onCartRemove={onCartRemove}
-            />
-          ))}
-          {isAnyLoading && <div className="opacity-40"><SkeletonRow /></div>}
-        </div>
-      )}
+        {/* Results */}
+        {rows.length > 0 && (
+          <div className="divide-y divide-ink-faint/20">
+            {rows.map((row, i) => (
+              <ShopAccordionRow
+                key={row.shopKey}
+                row={row}
+                rank={i}
+                totalProducts={completedCount}
+                cart={cart}
+                onCartAdd={onCartAdd}
+                onCartRemove={onCartRemove}
+              />
+            ))}
+            {isAnyLoading && <div className="opacity-40"><SkeletonRow /></div>}
+          </div>
+        )}
 
-      {/* Empty */}
-      {!isAnyLoading && rows.length === 0 && hasAny && (
-        <div className="p-10 text-center text-ink-tertiary text-sm">
-          Nessun risultato trovato per i prodotti inseriti.
-        </div>
-      )}
+        {/* Empty */}
+        {!isAnyLoading && rows.length === 0 && hasAny && (
+          <div className="p-10 text-center text-ink-tertiary text-sm">
+            Nessun risultato trovato per i prodotti inseriti.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

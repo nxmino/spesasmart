@@ -190,7 +190,7 @@ export default function HomeClient() {
           </div>
 
           {/* Right column */}
-          <div className="min-w-0">
+          <div className="min-w-0 lg:sticky lg:top-[72px]">
             <ResultsTable
               productResults={productResults}
               cart={cart}
