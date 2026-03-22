@@ -123,7 +123,7 @@ function ShopAccordionRow({
 
       {/* Accordion */}
       {open && (
-        <div className="px-4 pb-4 flex flex-col animate-fade-in">
+        <div className="px-4 pb-4 flex flex-col animate-fade-in max-h-80 overflow-y-auto overscroll-contain">
           {row.items.map((item) => {
             const inCart = cart?.some((c) => c.product === item.product && c.shopKey === row.shopKey) ?? false;
 
