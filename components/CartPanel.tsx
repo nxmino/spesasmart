@@ -147,11 +147,11 @@ export default function CartPanel({ cart, onRemove, onClear }: CartPanelProps) {
           <div className="fixed inset-0 bg-black/40 z-40 animate-fade-in" onClick={() => setSheetOpen(false)} />
         )}
         {sheetOpen && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-elevated animate-slide-up">
-            <div className="flex justify-center pt-3 pb-1">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-elevated animate-slide-up flex flex-col" style={{ maxHeight: "85dvh" }}>
+            <div className="flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-10 h-1 rounded-full bg-ink-faint" />
             </div>
-            <div className="px-5 py-3 border-b border-ink-faint/30 flex items-center gap-2">
+            <div className="px-5 py-3 border-b border-ink-faint/30 flex items-center gap-2 shrink-0">
               <CartIcon className="w-4 h-4 text-brand-600" />
               <span className="font-bold text-ink flex-1">Carrello</span>
               <span className="text-2xs font-bold bg-brand-600 text-white w-5 h-5 rounded-full flex items-center justify-center">
@@ -163,7 +163,7 @@ export default function CartPanel({ cart, onRemove, onClear }: CartPanelProps) {
                 </svg>
               </button>
             </div>
-            <div className="px-5 py-2 pb-8 max-h-[60vh] overflow-y-auto pb-safe">
+            <div className="px-5 pt-2 pb-8 overflow-y-auto flex-1">
               <CartBody cart={cart} onRemove={onRemove} onClear={onClear} />
             </div>
           </div>
