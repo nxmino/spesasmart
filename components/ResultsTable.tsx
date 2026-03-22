@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { ProductResult, ShopRow, CartItem } from "@/types";
 import { aggregateResults } from "@/lib/aggregate";
 
@@ -204,6 +204,17 @@ export default function ResultsTable({ productResults, cart, onCartAdd, onCartRe
   const hasAny = productResults.length > 0;
   const completedCount = productResults.filter((r) => !r.loading).length;
   const rows = useMemo(() => aggregateResults(productResults), [productResults]);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+
+  // Lock body scroll when expanded on mobile
+  useEffect(() => {
+    if (mobileExpanded) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileExpanded]);
 
   if (!hasAny) {
     return (
@@ -224,7 +235,7 @@ export default function ResultsTable({ productResults, cart, onCartAdd, onCartRe
   }
 
   return (
-    <div className="card overflow-hidden flex flex-col lg:h-[calc(100svh-92px)]">
+    <div className={`card overflow-hidden flex flex-col lg:h-[calc(100svh-92px)] ${mobileExpanded ? "fixed inset-x-0 top-14 bottom-0 z-50 rounded-b-none" : "max-h-[55vh] lg:max-h-none"}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-ink-faint/30 flex items-center gap-2 shrink-0">
         <h2 className="font-bold text-ink text-sm flex-1">
@@ -237,6 +248,22 @@ export default function ResultsTable({ productResults, cart, onCartAdd, onCartRe
           <span className="w-20 text-right">Sped.</span>
           <span className="w-20 text-right pr-6">Totale</span>
         </div>
+        {/* Expand/collapse button — mobile only */}
+        <button
+          onClick={() => setMobileExpanded((v) => !v)}
+          className="lg:hidden ml-1 p-1.5 rounded-xl text-ink-tertiary hover:bg-surface active:bg-ink-faint/20 transition-colors"
+          aria-label={mobileExpanded ? "Riduci" : "Espandi"}
+        >
+          {mobileExpanded ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Scrollable content */}
