@@ -147,7 +147,7 @@ export default function CartPanel({ cart, onRemove, onClear }: CartPanelProps) {
           <div className="fixed inset-0 bg-black/40 z-40 animate-fade-in" onClick={() => setSheetOpen(false)} />
         )}
         {sheetOpen && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-elevated animate-slide-up flex flex-col" style={{ maxHeight: "85dvh" }}>
+          <div className="fixed inset-0 z-50 bg-white animate-slide-up flex flex-col">
             <div className="flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-10 h-1 rounded-full bg-ink-faint" />
             </div>
